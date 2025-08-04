@@ -1,13 +1,13 @@
 .fresher-course-player {
     display: grid;
-    grid-template-columns: 1fr 350px; /* Main content takes remaining space, sidebar is 350px */
+    grid-template-columns: 350px 1fr; /* Sidebar is 350px, main content takes remaining space */
     height: 100vh;
     background-color: #f0f2f5;
     font-family: 'Inter', sans-serif;
 }
 
 .fresher-course-player.sidebar-hidden {
-    grid-template-columns: 1fr 0px; /* Video section takes full width, sidebar is hidden */
+    grid-template-columns: 0px 1fr; /* Sidebar is hidden, video section takes full width */
 }
 
 .fresher-course-player.sidebar-hidden .course-sidebar {

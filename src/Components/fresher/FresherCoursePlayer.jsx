@@ -15,6 +15,7 @@ const FresherCoursePlayer = () => {
     const [user, setUser] = useState(null);
     const [isSidebarHidden, setIsSidebarHidden] = useState(false);
     const [showCongratulations, setShowCongratulations] = useState(false); // New state for congratulations animation
+    const [showAssessmentUnlocked, setShowAssessmentUnlocked] = useState(false); // New state for assessment unlocked message
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -88,8 +89,12 @@ const FresherCoursePlayer = () => {
                 setShowCongratulations(true); // Show congratulations animation
                 setTimeout(() => {
                     setShowCongratulations(false); // Hide after a delay
-                    navigate('/fresher/my-courses'); // Navigate after animation
-                }, 3000); // 3 seconds for animation
+                    setShowAssessmentUnlocked(true); // Show assessment unlocked message
+                    setTimeout(() => {
+                        setShowAssessmentUnlocked(false); // Hide assessment unlocked message after a delay
+                        navigate('/fresher/my-courses'); // Navigate after all animations
+                    }, 3000); // 3 seconds for assessment unlocked message
+                }, 3000); // 3 seconds for congratulations animation
 
                 // Add the completed course to the user's completedCourses collection
                 const completedCourseRef = doc(db, 'users', user.uid, 'completedCourses', courseId);
@@ -131,6 +136,28 @@ const FresherCoursePlayer = () => {
                     </div>
                 </div>
             )}
+            {showAssessmentUnlocked && (
+                <div className="congratulations-overlay">
+                    <div className="congratulations-message">
+                        <h2>Assessment Unlocked!</h2>
+                        <p>A new assessment related to this course is now available.</p>
+                    </div>
+                </div>
+            )}
+            <div className="course-sidebar">
+                <h3>{course.title}</h3>
+                <div className="lectures-list">
+                    {course.lectures.map((lecture, index) => (
+                        <div 
+                            key={lecture.id || index} 
+                            className={`sidebar-lecture-item ${index === currentLectureIndex ? 'active' : ''}`}
+                            onClick={() => setCurrentLectureIndex(index)}
+                        >
+                            <span>{index + 1}. {lecture.title}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
             <div className="video-player-section">
                 <button 
                     className="toggle-sidebar-btn" 
@@ -163,21 +190,6 @@ const FresherCoursePlayer = () => {
                             Finish Course
                         </button>
                     )}
-                </div>
-            </div>
-
-            <div className="course-sidebar">
-                <h3>{course.title}</h3>
-                <div className="lectures-list">
-                    {course.lectures.map((lecture, index) => (
-                        <div 
-                            key={lecture.id || index} 
-                            className={`sidebar-lecture-item ${index === currentLectureIndex ? 'active' : ''}`}
-                            onClick={() => setCurrentLectureIndex(index)}
-                        >
-                            <span>{index + 1}. {lecture.title}</span>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>
