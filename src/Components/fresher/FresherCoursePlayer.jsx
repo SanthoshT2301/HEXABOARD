@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import '../../Style/FresherCoursePlayer.css';
 
@@ -13,9 +13,8 @@ const FresherCoursePlayer = () => {
     const [progress, setProgress] = useState(0); // New state for progress
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [isSidebarHidden, setIsSidebarHidden] = useState(false);
-    const [showCongratulations, setShowCongratulations] = useState(false); // New state for congratulations animation
-    const [showAssessmentUnlocked, setShowAssessmentUnlocked] = useState(false); // New state for assessment unlocked message
+    const [showCongratulations, setShowCongratulations] = useState(false);
+    const [showAssessmentUnlocked, setShowAssessmentUnlocked] = useState(false);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -86,27 +85,28 @@ const FresherCoursePlayer = () => {
                     progress: 100,
                     completed: true
                 });
-                setShowCongratulations(true); // Show congratulations animation
-                setTimeout(() => {
-                    setShowCongratulations(false); // Hide after a delay
-                    setShowAssessmentUnlocked(true); // Show assessment unlocked message
+                setShowCongratulations(true);
+                setTimeout(async () => {
+                    setShowCongratulations(false);
+                    // Create a new assignment for the completed course
+                    const assignmentsCollectionRef = collection(db, 'users', user.uid, 'assignments');
+                    await addDoc(assignmentsCollectionRef, {
+                        courseId: course.id,
+                        courseTitle: course.title,
+                        status: 'pending', // Or 'assigned', 'new', etc.
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Example: Due in 7 days
+                        createdAt: new Date(),
+                        // Add any other relevant assessment details here
+                    });
+                    setShowAssessmentUnlocked(true);
                     setTimeout(() => {
-                        setShowAssessmentUnlocked(false); // Hide assessment unlocked message after a delay
-                        navigate('/fresher/my-courses'); // Navigate after all animations
-                    }, 3000); // 3 seconds for assessment unlocked message
-                }, 3000); // 3 seconds for congratulations animation
-
-                // Add the completed course to the user's completedCourses collection
-                const completedCourseRef = doc(db, 'users', user.uid, 'completedCourses', courseId);
-                await setDoc(completedCourseRef, { 
-                    courseId: courseId, 
-                    completedAt: new Date(),
-                    title: course.title // Store course title for display in dashboard
-                }, { merge: true });
-
+                        setShowAssessmentUnlocked(false);
+                        navigate('/fresher/dashboard', { state: { activeTab: 'assignments' } }); // Redirect to dashboard and activate assignments tab
+                    }, 3000); // Show assessment unlocked message for 3 seconds
+                }, 3000); // Show congratulations for 3 seconds
             } catch (error) {
-                console.error("Error marking course as finished:", error);
-                alert('Failed to mark course as finished. Please try again.');
+                console.error("Error marking course as finished or creating assignment:", error);
+                alert('Failed to mark course as finished or create assignment. Please try again.');
             }
         }
     };
@@ -127,44 +127,32 @@ const FresherCoursePlayer = () => {
     const currentLecture = course.lectures[currentLectureIndex];
 
     return (
-        <div className={`fresher-course-player ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
+        <div className="fresher-course-player">
             {showCongratulations && (
                 <div className="congratulations-overlay">
                     <div className="congratulations-message">
                         <h2>Congratulations!</h2>
                         <p>You have successfully completed the course!</p>
+                        <div className="confetti"></div>
+                        <div className="confetti"></div>
+                        <div className="confetti"></div>
+                        <div className="confetti"></div>
+                        <div className="confetti"></div>
+                        <div className="confetti"></div>
                     </div>
                 </div>
             )}
+
             {showAssessmentUnlocked && (
-                <div className="congratulations-overlay">
-                    <div className="congratulations-message">
+                <div className="assessment-unlocked-overlay">
+                    <div className="assessment-unlocked-message">
                         <h2>Assessment Unlocked!</h2>
-                        <p>A new assessment related to this course is now available.</p>
+                        <p>A new assessment has been assigned to you.</p>
                     </div>
                 </div>
             )}
-            <div className="course-sidebar">
-                <h3>{course.title}</h3>
-                <div className="lectures-list">
-                    {course.lectures.map((lecture, index) => (
-                        <div 
-                            key={lecture.id || index} 
-                            className={`sidebar-lecture-item ${index === currentLectureIndex ? 'active' : ''}`}
-                            onClick={() => setCurrentLectureIndex(index)}
-                        >
-                            <span>{index + 1}. {lecture.title}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+
             <div className="video-player-section">
-                <button 
-                    className="toggle-sidebar-btn" 
-                    onClick={() => setIsSidebarHidden(!isSidebarHidden)}
-                >
-                    {isSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}
-                </button>
                 {currentLecture && currentLecture.videoUrl ? (
                     <video controls autoPlay key={currentLecture.videoUrl} className="main-video-player">
                         <source src={currentLecture.videoUrl} type="video/mp4" />
@@ -190,6 +178,21 @@ const FresherCoursePlayer = () => {
                             Finish Course
                         </button>
                     )}
+                </div>
+            </div>
+
+            <div className="course-sidebar">
+                <h3>{course.title}</h3>
+                <div className="lectures-list">
+                    {course.lectures.map((lecture, index) => (
+                        <div 
+                            key={lecture.id || index} 
+                            className={`sidebar-lecture-item ${index === currentLectureIndex ? 'active' : ''}`}
+                            onClick={() => setCurrentLectureIndex(index)}
+                        >
+                            <span>{index + 1}. {lecture.title}</span>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

@@ -1,40 +1,9 @@
 .fresher-course-player {
     display: grid;
-    grid-template-columns: 350px 1fr; /* Sidebar is 350px, main content takes remaining space */
+    grid-template-columns: 1fr 350px; /* Main content takes remaining space, sidebar is 350px */
     height: 100vh;
     background-color: #f0f2f5;
     font-family: 'Inter', sans-serif;
-}
-
-.fresher-course-player.sidebar-hidden {
-    grid-template-columns: 0px 1fr; /* Sidebar is hidden, video section takes full width */
-}
-
-.fresher-course-player.sidebar-hidden .course-sidebar {
-    width: 0;
-    overflow: hidden;
-    padding: 0;
-    border: none;
-}
-
-.toggle-sidebar-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: rgba(0, 0, 0, 0.6); /* Slightly darker background */
-    color: white;
-    border: none;
-    padding: 12px 18px; /* Increased padding */
-    border-radius: 6px; /* Slightly larger border-radius */
-    cursor: pointer;
-    font-size: 1rem; /* Slightly larger font size */
-    z-index: 100; /* Increased z-index to ensure it's always on top */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Added subtle shadow */
-}
-
-.toggle-sidebar-btn:hover {
-    background-color: rgba(0, 0, 0, 0.7);
 }
 
 .video-player-section {
@@ -74,7 +43,9 @@
 
 
 .lecture-info h2 {
-    display: none; /* Hidden as per user request */
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: #e0e0e0;
 }
 
 .lecture-info p {
@@ -100,7 +71,6 @@
     flex-direction: column;
     padding: 20px;
     box-sizing: border-box;
-    transition: width 0.3s ease, padding 0.3s ease;
 }
 
 .course-sidebar h3 {
@@ -213,7 +183,7 @@
     padding: 50px;
 }
 
-/* Congratulations Animation */
+/* Congratulations Overlay */
 .congratulations-overlay {
     position: fixed;
     top: 0;
@@ -225,35 +195,102 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
 }
 
 .congratulations-message {
     background-color: #fff;
     padding: 40px;
-    border-radius: 10px;
+    border-radius: 15px;
     text-align: center;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    animation: pop-in 0.5s ease-out forwards;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    position: relative;
+    overflow: hidden;
 }
 
 .congratulations-message h2 {
-    font-size: 2.5rem;
     color: #28a745;
+    font-size: 3em;
     margin-bottom: 15px;
 }
 
 .congratulations-message p {
-    font-size: 1.2rem;
     color: #555;
+    font-size: 1.5em;
 }
 
-@keyframes pop-in {
-    from {
-        transform: scale(0.5);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
+/* Confetti Animation */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    opacity: 0;
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+.confetti:nth-child(1) { background-color: #f00; left: 10%; animation-delay: 0s; }
+.confetti:nth-child(2) { background-color: #0f0; left: 20%; animation-delay: 0.2s; }
+.confetti:nth-child(3) { background-color: #00f; left: 30%; animation-delay: 0.4s; }
+.confetti:nth-child(4) { background-color: #ff0; left: 40%; animation-delay: 0.6s; }
+.confetti:nth-child(5) { background-color: #f0f; left: 50%; animation-delay: 0.8s; }
+.confetti:nth-child(6) { background-color: #0ff; left: 60%; animation-delay: 1s; }
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100px) rotateZ(0deg);
         opacity: 1;
     }
+    100% {
+        transform: translateY(500px) rotateZ(720deg);
+        opacity: 0;
+    }
+}
+
+/* Assessment Unlocked Overlay */
+.assessment-unlocked-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.assessment-unlocked-message {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.assessment-unlocked-message h2 {
+    color: #007bff;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
+.assessment-unlocked-message p {
+    color: #555;
+    font-size: 1.3em;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }

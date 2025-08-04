@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import '../../Style/FresherDashboard.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { db } from "../../firebase";
@@ -171,14 +172,16 @@ const courseData = [
 ];
 
 const Dashboard = () => {
+    const location = useLocation();
     const [data, setData] = useState({ activeCourses: 0, pendingAssignments: 0, completed: 0 });
     const [userName, setUserName] = useState("...");
     const [certifications, setCertifications] = useState([]);
+    const [assignments, setAssignments] = useState([]); // New state for assignments
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [progressData, setProgressData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'dashboard');
     const [selectedCourse, setSelectedCourse] = useState(null);
     const dropdownRef = useRef(null);
 
@@ -197,28 +200,34 @@ const Dashboard = () => {
                         console.log("Fetched user data:", userData);
                         setUserName(userData.name || "Fresher");
 
-                        // Fetch assigned courses
-                        const assignedCoursesRef = collection(db, "users", user.uid, "assignedCourses");
-                        const assignedCoursesSnap = await getDocs(assignedCoursesRef);
-                        const assignedCoursesList = assignedCoursesSnap.docs.map(doc => doc.data());
-                        console.log("Fetched assigned courses:", assignedCoursesList);
+                        // Fetch user's enrolled courses
+                        const userCoursesRef = collection(db, "users", user.uid, "courses");
+                        const userCoursesSnap = await getDocs(userCoursesRef);
+                        const userCoursesList = userCoursesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                        // Fetch completed courses
-                        const completedCoursesRef = collection(db, "users", user.uid, "completedCourses");
-                        const completedCoursesSnap = await getDocs(completedCoursesRef);
-                        const completedCoursesList = completedCoursesSnap.docs.map(doc => doc.data());
-                        console.log("Fetched completed courses:", completedCoursesList);
+                        let activeCoursesCount = 0;
+                        let completedCoursesCount = 0;
 
-                        // Fetch pending assignments
-                        const pendingAssignmentsRef = collection(db, "users", user.uid, "pendingAssignments");
-                        const pendingAssignmentsSnap = await getDocs(pendingAssignmentsRef);
-                        const pendingAssignmentsList = pendingAssignmentsSnap.docs.map(doc => doc.data());
-                        console.log("Fetched pending assignments:", pendingAssignmentsList);
+                        userCoursesList.forEach(course => {
+                            if (course.completed) {
+                                completedCoursesCount++;
+                            } else {
+                                activeCoursesCount++;
+                            }
+                        });
+
+                        // Fetch assignments
+                        const assignmentsRef = collection(db, "users", user.uid, "assignments");
+                        const assignmentsSnap = await getDocs(assignmentsRef);
+                        const assignmentsList = assignmentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setAssignments(assignmentsList);
+
+                        const pendingAssignmentsCount = assignmentsList.filter(assignment => assignment.status === 'pending').length;
 
                         setData({
-                            activeCourses: assignedCoursesList.length, // Dynamic assigned courses
-                            pendingAssignments: pendingAssignmentsList.length, // Dynamic pending assignments
-                            completed: completedCoursesList.length, // Dynamic completed courses
+                            activeCourses: activeCoursesCount,
+                            pendingAssignments: pendingAssignmentsCount,
+                            completed: completedCoursesCount,
                         });
                     } else {
                         setError("User profile not found.");
@@ -250,6 +259,19 @@ const Dashboard = () => {
                         console.error("Error loading progress data:", progressErr);
                         setProgressData([]);
                     }
+
+                    // Fetch assignments
+                    try {
+                        const assignmentsRef = collection(db, "users", user.uid, "assignments");
+                        const assignmentsSnap = await getDocs(assignmentsRef);
+                        const assignmentsList = assignmentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setAssignments(assignmentsList);
+                        console.log("Fetched assignments:", assignmentsList);
+                    } catch (assignmentErr) {
+                        console.error("Error loading assignments:", assignmentErr);
+                        setAssignments([]);
+                    }
+
                 } else {
                     setError("No user is logged in.");
                     console.error("No user is logged in.");
@@ -412,6 +434,31 @@ const Dashboard = () => {
                 )}
             </section>
         </>
+    );
+
+    const renderAssignments = () => (
+        <section className="assignments-section">
+            <h4>📚 Your Assignments</h4>
+            {assignments.length === 0 ? (
+                <p>No assignments yet. Complete a course to get started!</p>
+            ) : (
+                <ul className="assignment-list">
+                    {assignments.map((assignment) => (
+                        <li key={assignment.id} className="assignment-item">
+                            <h5>{assignment.courseTitle}</h5>
+                            <p>Status: <span className={`assignment-status ${assignment.status}`}>{assignment.status}</span></p>
+                            {assignment.dueDate && <p>Due: {formatDate(assignment.dueDate)}</p>}
+                            <button 
+                                className="take-assessment-btn"
+                                onClick={() => navigate(`/fresher/assessment/${assignment.id}`)} // Placeholder navigation
+                            >
+                                Take Assessment
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
     );
 
     const renderCourses = () => (
@@ -606,14 +653,20 @@ const Dashboard = () => {
                             My Courses
                         </a>
                         <a href="#">Daily Quiz</a>
-                        <a href="#">Assignments</a>
+                        <a 
+                            href="#" 
+                            className={activeTab === 'assignments' ? 'active' : ''} 
+                            onClick={() => setActiveTab('assignments')}
+                        >
+                            Assignments
+                        </a>
                     </nav>
                 </aside>
 
                 {/* Main */}
                 <main className="main-content">
                     <header className="topbar">
-                        <h2>{activeTab === 'dashboard' ? 'Dashboard' : 'My Learning'}</h2>
+                        <h2>{activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'courses' ? 'My Learning' : 'Assignments'}</h2>
                         <div className="user-dropdown" ref={dropdownRef}>
                             <span className="user-name" onClick={() => setDropdownOpen(!dropdownOpen)}>
                                 {userName} ▾
@@ -626,7 +679,7 @@ const Dashboard = () => {
                         </div>
                     </header>
 
-                    {activeTab === 'dashboard' ? renderDashboard() : activeTab === 'courses' ? <MyCourses /> : renderCourses()}
+                    {activeTab === 'dashboard' ? renderDashboard() : activeTab === 'courses' ? <MyCourses /> : renderAssignments()}
                 </main>
             </div>
 
