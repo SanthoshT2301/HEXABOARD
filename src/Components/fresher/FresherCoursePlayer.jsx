@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import '../../Style/FresherCoursePlayer.css';
 
@@ -13,6 +13,8 @@ const FresherCoursePlayer = () => {
     const [progress, setProgress] = useState(0); // New state for progress
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+    const [showCongratulations, setShowCongratulations] = useState(false); // New state for congratulations animation
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -83,8 +85,20 @@ const FresherCoursePlayer = () => {
                     progress: 100,
                     completed: true
                 });
-                alert('Course Finished and Progress Saved!');
-                navigate('/fresher/my-courses');
+                setShowCongratulations(true); // Show congratulations animation
+                setTimeout(() => {
+                    setShowCongratulations(false); // Hide after a delay
+                    navigate('/fresher/my-courses'); // Navigate after animation
+                }, 3000); // 3 seconds for animation
+
+                // Add the completed course to the user's completedCourses collection
+                const completedCourseRef = doc(db, 'users', user.uid, 'completedCourses', courseId);
+                await setDoc(completedCourseRef, { 
+                    courseId: courseId, 
+                    completedAt: new Date(),
+                    title: course.title // Store course title for display in dashboard
+                }, { merge: true });
+
             } catch (error) {
                 console.error("Error marking course as finished:", error);
                 alert('Failed to mark course as finished. Please try again.');
@@ -108,8 +122,22 @@ const FresherCoursePlayer = () => {
     const currentLecture = course.lectures[currentLectureIndex];
 
     return (
-        <div className="fresher-course-player">
+        <div className={`fresher-course-player ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
+            {showCongratulations && (
+                <div className="congratulations-overlay">
+                    <div className="congratulations-message">
+                        <h2>Congratulations!</h2>
+                        <p>You have successfully completed the course!</p>
+                    </div>
+                </div>
+            )}
             <div className="video-player-section">
+                <button 
+                    className="toggle-sidebar-btn" 
+                    onClick={() => setIsSidebarHidden(!isSidebarHidden)}
+                >
+                    {isSidebarHidden ? 'Show Sidebar' : 'Hide Sidebar'}
+                </button>
                 {currentLecture && currentLecture.videoUrl ? (
                     <video controls autoPlay key={currentLecture.videoUrl} className="main-video-player">
                         <source src={currentLecture.videoUrl} type="video/mp4" />

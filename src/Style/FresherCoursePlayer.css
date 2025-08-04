@@ -6,6 +6,37 @@
     font-family: 'Inter', sans-serif;
 }
 
+.fresher-course-player.sidebar-hidden {
+    grid-template-columns: 1fr 0px; /* Video section takes full width, sidebar is hidden */
+}
+
+.fresher-course-player.sidebar-hidden .course-sidebar {
+    width: 0;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+}
+
+.toggle-sidebar-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.6); /* Slightly darker background */
+    color: white;
+    border: none;
+    padding: 12px 18px; /* Increased padding */
+    border-radius: 6px; /* Slightly larger border-radius */
+    cursor: pointer;
+    font-size: 1rem; /* Slightly larger font size */
+    z-index: 100; /* Increased z-index to ensure it's always on top */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Added subtle shadow */
+}
+
+.toggle-sidebar-btn:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
 .video-player-section {
     background-color: #1a1a1a;
     display: flex;
@@ -43,9 +74,7 @@
 
 
 .lecture-info h2 {
-    font-size: 2.2rem;
-    margin-bottom: 10px;
-    color: #e0e0e0;
+    display: none; /* Hidden as per user request */
 }
 
 .lecture-info p {
@@ -71,6 +100,7 @@
     flex-direction: column;
     padding: 20px;
     box-sizing: border-box;
+    transition: width 0.3s ease, padding 0.3s ease;
 }
 
 .course-sidebar h3 {
@@ -181,4 +211,49 @@
     color: #dc3545;
     font-size: 1.2rem;
     padding: 50px;
+}
+
+/* Congratulations Animation */
+.congratulations-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.congratulations-message {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: pop-in 0.5s ease-out forwards;
+}
+
+.congratulations-message h2 {
+    font-size: 2.5rem;
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.congratulations-message p {
+    font-size: 1.2rem;
+    color: #555;
+}
+
+@keyframes pop-in {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

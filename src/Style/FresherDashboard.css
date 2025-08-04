@@ -375,8 +375,8 @@ body {
 /* Course Grid - Udemy Style */
 .course-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    grid-template-columns: 1fr; /* Changed to single column for vertical display */
+    gap: 20px; /* Adjusted gap for vertical layout */
     margin-bottom: 32px;
 }
 
@@ -388,6 +388,8 @@ body {
     transition: all 0.3s ease;
     cursor: pointer;
     border: 1px solid #e5e7eb;
+    display: flex; /* Changed to flex for horizontal layout */
+    height: 150px; /* Reduced height for the card */
 }
 
 .course-card:hover {
@@ -398,8 +400,8 @@ body {
 /* Course Thumbnail */
 .course-thumbnail {
     position: relative;
-    width: 100%;
-    height: 180px;
+    width: 30%; /* Reduced width for the thumbnail */
+    height: 100%; /* Take full height of the card */
     overflow: hidden;
 }
 
